@@ -14,7 +14,16 @@ int main(void) {
 
             };
             printf("\n");
-        };
+            for (int k = 1; k <= i-rows; k++) {
+            printf("  ");
+            }
+            for (int l = 1; l <= 2*(2*rows-i)-1; l++) {
+            printf("* ");
+            }
+            printf("\n");
+            };
+
+
     } else {
         for (int i = 0; i <= rows; i++) {
             for(int j = 0; j <= reduceRow-1;  j++) {
@@ -28,7 +37,5 @@ int main(void) {
         }
     }
     return 0;
-
 }
 
--1
