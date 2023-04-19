@@ -10,6 +10,8 @@ struct digit *createDigit(int dig);
 struct digit *append(struct digit *end, struct digit *newDigitptr);
 void printNumber(struct digit *start);
 void freeNumber(struct digit *start);
+struct digit * readNumber();
+
 int main(void)
 {
     //! stack=showMemory(start=65520,cursors=[start,newDigitptr,end,tmp])
