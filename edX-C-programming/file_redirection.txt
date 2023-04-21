@@ -1,0 +1,4 @@
+cat answers | ./program
+
+./program < answers
+./program > answer.txt

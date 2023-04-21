@@ -1,0 +1,197 @@
+const sheetName = "Form Responses 1"; // replace this sheet name with yours
+const uidHeader = "_REG"; // column name of UID in response sheet
+const uidPrefix = "REG-"; // UID prefeix
+const uidDigitLength = 4; // digit length of UID
+
+function _onFormSubmit(e) {
+  const { rowStart } = e.range
+  var url = SpreadsheetApp.getActive().getFormUrl();
+  var form = FormApp.openByUrl(url);
+  var response = form.getResponses().pop();
+  var url = form.getPublishedUrl();
+  const editUrl = response.getEditResponseUrl()
+  var responseId = response.getId();
+
+
+  // for sequential id
+  //var uid = createUid(responseId);
+
+  // for random id
+  var uid = createRandomUid(responseId);
+  writeUidToSheet(uid, rowStart);
+
+  var title = " Thanks for registering for Reunirse 2023";
+  var hello = "Hello ";
+  // Edited
+
+  //var responses = response.getItemResponses();
+
+  var responses = response.getItemResponses();
+  var nameTest = responses[1].getResponse(); //edited my andrew (working this one also) responses[0] == Esoft registration id
+
+  //Edited by andrew
+  var name = "";
+  for (var i = 0; i < responses.length; i++) {
+    var item = responses[i].getItem();
+    if (item.getTitle() === "Name") {
+      name = responses[i].getResponse();
+      break;
+    }
+  }
+
+
+
+  // Edited section Finish
+  //  var lastItem = response.getItemResponses().pop();
+  var email = response.getRespondentEmail();
+  if (email) {
+    var subject = form.getTitle();
+    var htmlBody = "<table style='width: 600px; margin: 10px auto; background: #f5f5f5;'><tr>" +
+      "<td style='padding: 0px 20px;'>" +
+      "<h2 style='text-align: center; letter-spacing: 0.1em; background: linear-gradient(60deg, #16a085, #1abc9c); color: #fff; padding: 10px;'>" + hello + name + 
+      title + "</h2>" +
+      "<p><b>Your Registration No is : </b></p>" +
+      "<div style='padding: 20px;border-radius: 20px; background: linear-gradient(60deg, #00ccff, #f71975);'>" +
+
+      "<div style='font-size: 25px; color: #ecf0f1; text-align: center;'>" + uid + "</div>" +
+
+      "</div>" +
+    "<br>Organizing Committee,<br>Reunirse 2023</p>, <br> HND Batch 71" +
+      "</td></tr></table>";
+
+    var options = {
+      htmlBody: htmlBody
+    };
+    GmailApp.sendEmail(email, subject, "", options);
+  }
+}
+
+/**
+ * var htmlBody = "<table style='width: 600px; margin: 10px auto; background: #dfe4ea;'><tr>" +
+                   "<td style='padding: 0px 20px;'>" +
+                    "<h2 style='text-align: center; letter-spacing: 0.1em; background: linear-gradient(60deg, #16a085, #1abc9c); color: #fff; padding: 10px;'>" +
+                     title + "</h2>" +
+                     "<p>Your Registration No</p>" +
+                     "<div style='padding: 20px;border-radius: 20px; background: linear-gradient(60deg, #16a085, #1abc9c);'>" +
+                       
+                       "<div style='font-size: 25px; color: #ecf0f1; text-align: center;'>" + uid +"</div>" +
+
+                     "</div>" +
+                     "<p><a href='"+ url +"' style='color: #16a085;'>Submit another response</a></p>" +
+                     "<p><a href='"+ editUrl +"' style='color: #16a085;'>Edit your response</a></p>" +
+
+                      
+
+                     "<p>Thanks,<br>Organizing Committee,<br>Reunirse 2023</p>" +
+                     "</td></tr></table>";
+ */
+
+  // Write uid to the responses sheet
+function writeUidToSheet(uid, rowStart){
+  var ws = SpreadsheetApp.getActive().getSheetByName(sheetName);
+  var dataRange = ws.getDataRange();
+  var values = dataRange.getValues();
+  var headers = values[0];
+  var indexUid;
+  
+  // Locate the index of header UID
+  for(var c = 0; c < headers.length; c ++){
+    if(headers[c] === uidHeader){
+      indexUid = c;
+      break;
+    }
+  }
+  
+  // Insert a new column in B if UID column is not found
+  if (indexUid === undefined){
+    ws.insertColumnsAfter(1, 1);
+    indexUid = 1;
+    ws.getRange("B1").setValue(uidHeader);
+    dataRange = ws.getDataRange();
+    values = dataRange.getValues();
+  }
+  
+  // Check UID's in the sheet row by row
+  var isNewUid = true;
+  for (var r = 1; r < values.length; r ++){
+    var currentUid = values[r][indexUid];
+    if (currentUid === uid){
+      isNewUid = false;
+      break;
+    }
+  }
+  
+  if (isNewUid){
+    ws.getRange(rowStart, indexUid + 1).setValue(uid)
+  }
+}
+  
+
+// Create a UID in document properties
+function createUid(responseId){
+  var docProperties = PropertiesService.getDocumentProperties();
+  var key = "uid";
+  var id = 1;
+  if (docProperties.getProperty(responseId)){
+    var uid = docProperties.getProperty(responseId);
+  }else{
+    if(docProperties.getProperty(key)){
+      id = parseInt(docProperties.getProperty(key));
+    }
+    
+    var uid = (Math.pow(10, uidDigitLength) + id).toString().substring(1, uidDigitLength+1);
+    uid = uidPrefix + uid;
+    
+    docProperties.setProperty(key, id + 1);
+    docProperties.setProperty(responseId, uid);
+  }
+  return uid;
+}
+
+// function a random uid in document properties
+function createRandomUid(responseId){
+  var docProperties = PropertiesService.getDocumentProperties();
+  var key = "randomUids";
+  var ids = [];
+  if (docProperties.getProperty(responseId)){
+    var uid = docProperties.getProperty(responseId);
+  }else{
+    if(docProperties.getProperty(key)){
+      ids = JSON.parse(docProperties.getProperty(key));
+    }
+    
+    do{
+      var randomNumber = Math.pow(10, uidDigitLength) + Math.floor(Math.random() * Math.pow(10, uidDigitLength));
+      var uid = randomNumber.toString().substring(1, uidDigitLength + 1);
+      uid = uidPrefix + uid;
+    }while (ids.indexOf(uid) !== -1)
+    
+    ids.push(uid)
+    docProperties.setProperty(key, JSON.stringify(ids));
+    docProperties.setProperty(responseId, uid);
+  }
+  return uid;
+}
+
+// Remove all properties from the document properties object, so the uid can be reset
+function resetForm(){
+  var ui = SpreadsheetApp.getUi();
+  var prompt = "This action will delete all responses in the form";
+  if (ui.alert("Confirmation",prompt, ui.ButtonSet.OK_CANCEL) === ui.Button.OK){
+    PropertiesService.getDocumentProperties().deleteAllProperties();
+    const url = SpreadsheetApp.getActive().getFormUrl();
+    const form = FormApp.openByUrl(url)
+    form.deleteAllResponses();
+    var msg = 'All responses have been deleted and UID has been reset. You need to manually remove the old data in sheet "' + sheetName + '".';
+    SpreadsheetApp.getActive().toast(msg, "Google Apps Script", 15);
+  }
+}
+
+
+
+function onOpen(){
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu("Scripts")
+    .addItem("Reset form", "resetForm")
+    .addToUi();
+}
