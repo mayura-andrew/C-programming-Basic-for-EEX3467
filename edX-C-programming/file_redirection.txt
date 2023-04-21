@@ -2,3 +2,6 @@ cat answers | ./program
 
 ./program < answers
 ./program > answer.txt
+
+
+scanf = fgets = getline =readline(only linux)
