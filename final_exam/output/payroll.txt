@@ -1,0 +1,3 @@
+Worker ID	Pay
+1		800
+2		560
